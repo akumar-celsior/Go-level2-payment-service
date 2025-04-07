@@ -12,6 +12,19 @@ import (
 
 var DbInstance *gorm.DB
 
+// init initializes the database connection when the package is imported.
+func init() {
+	// Load configuration from .env file
+	LoadConfig()
+	log.Println("Initializing database connection...")
+	var err error
+	DbInstance, err = ConnectSpannerDB()
+	if err != nil {
+		log.Fatalf("Failed to initialize database in init(): %v", err)
+	}
+	log.Println("Database connection initialized successfully.")
+}
+
 // ConnectSpannerDB initializes GORM with Google Cloud Spanner.
 func ConnectSpannerDB() (*gorm.DB, error) {
 	// Get the database connection details from the environment
@@ -20,8 +33,9 @@ func ConnectSpannerDB() (*gorm.DB, error) {
 	dbName := GetEnv("DB_NAME")
 
 	// Build the Spanner connection string
+	log.Printf("DB_PROJECT_ID: %s, DB_INSTANCE_ID: %s, DB_NAME: %s", projectID, instanceID, dbName)
 	dsn := fmt.Sprintf("projects/%s/instances/%s/databases/%s", projectID, instanceID, dbName)
-
+	log.Printf("Connecting to Spanner with DSN: %s", dsn)
 	// Connect to Spanner using the GORM driver for Spanner
 	db, err := gorm.Open(spannergorm.New(spannergorm.Config{
 		DriverName: "spanner", // Spanner driver name
@@ -33,7 +47,7 @@ func ConnectSpannerDB() (*gorm.DB, error) {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
+		log.Printf("[error] failed to initialize database, DSN: %s, error: %v", dsn, err)
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
