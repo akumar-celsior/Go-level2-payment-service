@@ -55,19 +55,16 @@ func ConnectCloudSQL() *gorm.DB {
 	cloudSQLConn := os.Getenv("CLOUDSQL_CONNECTION_NAME")
 	cloudSQLHost := os.Getenv("CLOUDSQL_HOST") // e.g., 127.0.0.1 or public IP
 	cloudSQLPort := os.Getenv("CLOUDSQL_PORT") // e.g., 3306
-	if cloudSQLHost == "" {
-		cloudSQLHost = "127.0.0.1" // default to localhost
-	}
 	if cloudSQLPort == "" {
 		cloudSQLPort = "3306" // default MySQL port
 	}
 
 	var dsn string
-	if os.PathSeparator == '\\' { // Windows uses backslash
-		// Use TCP connection on Windows
+	if cloudSQLHost != "" {
+		// Use TCP connection if CLOUDSQL_HOST is set
 		dsn = user + ":" + password + "@tcp(" + cloudSQLHost + ":" + cloudSQLPort + ")/" + dbName + "?parseTime=true"
 	} else {
-		// Use Unix socket on Linux/Mac
+		// Use Unix socket if CLOUDSQL_HOST is not set
 		if cloudSQLConn == "" {
 			log.Fatal("Missing CLOUDSQL_CONNECTION_NAME environment variable")
 		}
